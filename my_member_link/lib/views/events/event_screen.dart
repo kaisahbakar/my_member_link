@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:my_member_link/models/myevent.dart';
@@ -22,9 +21,9 @@ class _EventScreenState extends State<EventScreen> {
   late double screenWidth, screenHeight;
   final df = DateFormat('dd/MM/yyyy hh:mm a');
   String status = "Loading...";
+
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     loadEventsData();
   }
@@ -33,7 +32,7 @@ class _EventScreenState extends State<EventScreen> {
   Widget build(BuildContext context) {
     screenHeight = MediaQuery.of(context).size.height;
     screenWidth = MediaQuery.of(context).size.width;
-    if (screenWidth <= 600) {}
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Events"),
@@ -66,47 +65,50 @@ class _EventScreenState extends State<EventScreen> {
                     },
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(4, 8, 4, 4),
-                      child: Column(children: [
-                        Text(
-                          eventsList[index].eventTitle.toString(),
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                              overflow: TextOverflow.ellipsis),
-                        ),
-                        SizedBox(
-                          child: Image.network(
-                              errorBuilder: (context, error, stackTrace) =>
-                                  SizedBox(
-                                    height: screenHeight / 6,
-                                    child: Image.asset(
-                                      "assets/images/na.png",
-                                    ),
-                                  ),
-                              width: screenWidth / 2,
-                              height: screenHeight / 6,
-                              fit: BoxFit.cover,
-                              scale: 4,
-                              "${MyConfig.servername}/memberlink/assets/events/${eventsList[index].eventFilename}"),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.fromLTRB(0, 8, 0, 0),
-                          child: Text(
-                            eventsList[index].eventType.toString(),
+                      child: Column(
+                        children: [
+                          Text(
+                            eventsList[index].eventTitle.toString(),
                             style: const TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                                overflow: TextOverflow.ellipsis),
                           ),
-                        ),
-                        Text(df.format(DateTime.parse(
-                            eventsList[index].eventDate.toString()))),
-                        Text(truncateString(
-                            eventsList[index].eventDescription.toString(), 45)),
-                      ]),
+                          SizedBox(
+                            child: Image.network(
+                                errorBuilder: (context, error, stackTrace) =>
+                                    SizedBox(
+                                      height: screenHeight / 6,
+                                      child: Image.asset(
+                                        "assets/images/na.png",
+                                      ),
+                                    ),
+                                width: screenWidth / 2,
+                                height: screenHeight / 6,
+                                fit: BoxFit.cover,
+                                scale: 4,
+                                "${MyConfig.servername}/memberlink/assets/events/${eventsList[index].eventFilename}"),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.fromLTRB(0, 8, 0, 0),
+                            child: Text(
+                              eventsList[index].eventType.toString(),
+                              style: const TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          Text(df.format(DateTime.parse(
+                              eventsList[index].eventDate.toString()))),
+                          Text(truncateString(
+                              eventsList[index].eventDescription.toString(),
+                              45)),
+                        ],
+                      ),
                     ),
                   ),
                 );
               })),
-      drawer: const MyDrawer(),
+      drawer:  const MyDrawer(),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(context,
@@ -128,27 +130,44 @@ class _EventScreenState extends State<EventScreen> {
 
   void loadEventsData() {
     http
-        .get(Uri.parse("${MyConfig.servername}/memberlink/api/load_events.php"))
+        .get(Uri.parse("${MyConfig.servername}/memberlink/api/load_event.php"))
         .then((response) {
-      log(response.body.toString());
+      log('Response Status: ${response.statusCode}');
+      log('Response Body: ${response.body}');
       if (response.statusCode == 200) {
-        var data = jsonDecode(response.body);
-        if (data['status'] == "success") {
-          var result = data['data']['events'];
-          eventsList.clear();
-          for (var item in result) {
-            MyEvent myevent = MyEvent.fromJson(item);
-            eventsList.add(myevent);
+        try {
+          var data = jsonDecode(response.body);
+          if (data['status'] == "success") {
+            var result = data['data']['events'];
+            eventsList.clear();
+            for (var item in result) {
+              log('Event Item: $item');
+              MyEvent myevent = MyEvent.fromJson(item);
+              eventsList.add(myevent);
+            }
+            setState(() {});
+          } else {
+            setState(() {
+              status = "No Data";
+            });
           }
-          setState(() {});
-        } else {
-          status = "No Data";
+        } catch (e) {
+          log('Error parsing JSON: $e');
+          setState(() {
+            status = "Error parsing data";
+          });
         }
       } else {
-        status = "Error loading data";
-        print("Error");
-        setState(() {});
+        setState(() {
+          status = "Error loading data";
+        });
+        log('Error: ${response.statusCode}');
       }
+    }).catchError((e) {
+      setState(() {
+        status = "Error loading data";
+      });
+      log('Error: $e');
     });
   }
 
@@ -249,7 +268,7 @@ class _EventScreenState extends State<EventScreen> {
             content: Text("Success"),
             backgroundColor: Colors.green,
           ));
-          loadEventsData(); //reload data
+          loadEventsData(); // Reload data
         } else {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text("Failed"),
@@ -257,6 +276,12 @@ class _EventScreenState extends State<EventScreen> {
           ));
         }
       }
+    }).catchError((e) {
+      log('Error deleting event: $e');
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Error deleting event"),
+        backgroundColor: Colors.red,
+      ));
     });
   }
 }

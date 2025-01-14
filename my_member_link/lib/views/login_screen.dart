@@ -227,6 +227,11 @@ class _LoginScreenState extends State<LoginScreen> {
             ));
             Navigator.pushReplacement(context,
                 MaterialPageRoute(builder: (content) => const MainScreen()));
+
+            // Save credentials if "Remember Me" is checked
+            if (rememberMe) {
+              savePref(email, password);
+            }
           } else {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content: Text("Login Failed: ${data['message']}"),
@@ -247,6 +252,13 @@ class _LoginScreenState extends State<LoginScreen> {
         ));
       });
     }
+  }
+
+  Future<void> savePref(String email, String password) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString("email", email);
+    prefs.setString("password", password);
+    prefs.setBool("rememberme", rememberMe);
   }
 
   Future<void> loadPref() async {

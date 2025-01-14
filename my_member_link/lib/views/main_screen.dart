@@ -29,32 +29,6 @@ class _MainScreenState extends State<MainScreen> {
 
   final FocusNode searchFocusNode = FocusNode();
 
-  final List<List<Color>> gradients = [
-    [const Color(0xFFFF9F00), const Color(0xFFE70000)], // Orange to Red
-    [const Color(0xFFE71E3F), const Color(0xFFED0BB9)], // Red to Pink
-    [const Color(0xFFE81095), const Color(0xFF272CD3)], // Pink to Blue
-    [const Color(0xFF1E30CD), const Color(0xFFE64E3C)], // Blue to Orange
-  ];
-
-  final List<List<Color>> lightModeGradients = [
-    [
-      const Color(0xFFFFE0B2),
-      const Color(0xFFFFCDD2)
-    ], // Light Orange to Light Red
-    [
-      const Color(0xFFFFCDD2),
-      const Color.fromARGB(255, 228, 187, 248)
-    ], // Light Red to Light Purple
-    [
-      const Color.fromARGB(255, 228, 187, 248),
-      const Color.fromARGB(255, 179, 252, 241)
-    ], // Light Purple to Light Blue
-    [
-      const Color.fromARGB(255, 179, 252, 241),
-      const Color(0xFFFFE0B2)
-    ], // Light Blue to Light Orange
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -81,6 +55,10 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
+  void _handleRefresh() {
+    loadNewsData();
+  }
+
   Future<void> loadNewsData() async {
     try {
       final response = await http.get(
@@ -95,7 +73,6 @@ class _MainScreenState extends State<MainScreen> {
           var result = data['data']['news'];
           newsList.clear();
           for (var item in result) {
-            log("Adding news item: ${item.toString()}");
             newsList.add(News.fromJson(item));
           }
           filterNews();
@@ -140,71 +117,61 @@ class _MainScreenState extends State<MainScreen> {
     return MaterialApp(
       theme: isDarkMode ? ThemeData.dark() : ThemeData.light(),
       home: Scaffold(
-        resizeToAvoidBottomInset:
-            false, // Prevents resizing when the keyboard appears
+        resizeToAvoidBottomInset: false,
         appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          iconTheme: const IconThemeData(color: Color(0xFFFF0085)),
-          title: const Text(
+          backgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
+          elevation: 1,
+          iconTheme: IconThemeData(
+            color: isDarkMode
+                ? const Color.fromARGB(255, 213, 223, 243)
+                : Colors.black,
+          ),
+          title: Text(
             "Newsletter",
             style: TextStyle(
-              color: Color.fromARGB(255, 237, 20, 20),
+              color: isDarkMode ? Colors.white : Colors.black,
             ),
           ),
           actions: [
             IconButton(
               icon: Icon(
-                isDarkMode
-                    ? Icons.nightlight_round
-                    : Icons.wb_sunny, // Icons for modes
+                isDarkMode ? Icons.nightlight_round : Icons.wb_sunny,
                 color: isDarkMode ? Colors.yellow : Colors.orange,
               ),
               onPressed: () {
                 setState(() {
-                  isDarkMode = !isDarkMode; // Toggle mode
+                  isDarkMode = !isDarkMode;
                 });
               },
             ),
             IconButton(
               icon: isLoading
-                  ? const CircularProgressIndicator(
-                      color: Colors.white,
-                    )
-                  : const Icon(Icons.refresh, color: Color(0xFFFF0085)),
+                  ? const CircularProgressIndicator()
+                  : const Icon(Icons.refresh),
               onPressed: isLoading ? null : _handleRefresh,
             ),
           ],
         ),
-        drawer: const MyDrawer(),
+        drawer:  const MyDrawer(),
         body: Column(
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      focusNode: searchFocusNode,
-                      keyboardAppearance:
-                          isDarkMode ? Brightness.dark : Brightness.light,
-                      decoration: InputDecoration(
-                        hintText: "Search by title or details...",
-                        prefixIcon: const Icon(Icons.search),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                      ),
-                      onChanged: (value) {
-                        setState(() {
-                          searchQuery = value;
-                          filterNews();
-                        });
-                      },
-                    ),
+              child: TextField(
+                focusNode: searchFocusNode,
+                decoration: InputDecoration(
+                  hintText: "Search by title or details...",
+                  prefixIcon: const Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
                   ),
-                  const SizedBox(width: 10),
-                ],
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    searchQuery = value;
+                    filterNews();
+                  });
+                },
               ),
             ),
             const SizedBox(height: 10),
@@ -224,116 +191,113 @@ class _MainScreenState extends State<MainScreen> {
                       itemCount: getCurrentPageItems().length,
                       itemBuilder: (context, index) {
                         List<News> currentItems = getCurrentPageItems();
-                        List<Color> gradientColors = isDarkMode
-                            ? gradients[index % gradients.length]
-                            : lightModeGradients[
-                                index % lightModeGradients.length];
-                        final textColor =
-                            isDarkMode ? Colors.white : Colors.black;
 
                         return Card(
-                          margin: const EdgeInsets.symmetric(vertical: 3),
+                          margin: const EdgeInsets.symmetric(vertical: 5),
+                          elevation: 2,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(40),
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          child: Container(
-                            height: 110,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: gradientColors,
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                              ),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: ListTile(
-                              dense: true,
-                              title: Text(
-                                truncateString(
-                                    currentItems[index].newsTitle, 30),
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: textColor,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
+                          color: isDarkMode
+                              ? Colors.grey[800]
+                              : const Color.fromARGB(
+                                  255, 255, 255, 255), // Adjust card color
+                          child: SizedBox(
+                            height: 120, // Fixed height for all cards
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Row(
                                 children: [
-                                  Text(
-                                    _formatDate(currentItems[index].newsDate),
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: textColor,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                    truncateString(
-                                        currentItems[index].newsDetails, 100),
-                                    textAlign: TextAlign.left,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: textColor,
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
-                              trailing: IconButton(
-                                icon: Icon(
-                                  Icons.arrow_forward,
-                                  color:
-                                      isDarkMode ? Colors.white : Colors.blue,
-                                ),
-                                onPressed: () {
-                                  showDialog(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                      title: Text(
-                                        currentItems[index].newsTitle,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 20,
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        Text(
+                                          truncateString(
+                                              currentItems[index].newsTitle,
+                                              30),
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: isDarkMode
+                                                ? Colors.white
+                                                : Colors.black,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
-                                      ),
-                                      content: Text(
-                                        currentItems[index].newsDetails,
-                                        style: const TextStyle(
-                                          fontSize: 16,
+                                        Text(
+                                          _formatDate(
+                                              currentItems[index].newsDate),
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: isDarkMode
+                                                ? Colors.grey[400]
+                                                : Colors.grey[600],
+                                          ),
                                         ),
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () {
-                                            Navigator.pop(context);
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    EditNewsScreen(
-                                                  news: currentItems[index],
-                                                  isDarkMode:
-                                                      isDarkMode, // Passing the isDarkMode value
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                          child: const Text("Edit"),
-                                        ),
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context),
-                                          child: const Text("Close"),
+                                        Text(
+                                          truncateString(
+                                              currentItems[index].newsDetails,
+                                              100),
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: isDarkMode
+                                                ? Colors.grey[300]
+                                                : Colors.grey[700],
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
                                       ],
                                     ),
-                                  );
-                                },
+                                  ),
+                                  IconButton(
+                                    icon: Icon(
+                                      Icons.arrow_forward,
+                                      color: isDarkMode
+                                          ? Colors.white
+                                          : Colors.black,
+                                    ),
+                                    onPressed: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                          title: Text(
+                                              currentItems[index].newsTitle),
+                                          content: Text(
+                                              currentItems[index].newsDetails),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () {
+                                                Navigator.pop(context);
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        EditNewsScreen(
+                                                      news: currentItems[index],
+                                                      isDarkMode: isDarkMode,
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                              child: const Text("Edit"),
+                                            ),
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.pop(context),
+                                              child: const Text("Close"),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ],
                               ),
                             ),
                           ),
@@ -366,32 +330,19 @@ class _MainScreenState extends State<MainScreen> {
           ],
         ),
         floatingActionButton: FloatingActionButton(
-          backgroundColor: const Color.fromARGB(255, 187, 227, 29),
+          backgroundColor: const Color(0xFF6200EE),
           onPressed: () async {
             await Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) =>
-                    NewNewsScreen(isDarkMode: isDarkMode), // Passing isDarkMode
+                builder: (context) => NewNewsScreen(isDarkMode: isDarkMode),
               ),
-            ); // Added this closing parenthesis
+            );
             loadNewsData();
           },
           child: const Icon(Icons.add, color: Colors.white),
         ),
       ),
     );
-  }
-
-  Future<void> _handleRefresh() async {
-    setState(() {
-      isLoading = true;
-    });
-    await loadNewsData();
-    setState(() {
-      filterNews();
-      totalPages = (filteredNewsList.length / itemsPerPage).ceil();
-      isLoading = false;
-    });
   }
 }

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:my_member_link/views/main_screen.dart';
 import 'package:my_member_link/views/product_screen.dart'; // Import ProductScreen
+import 'package:my_member_link/views/events/event_screen.dart'; // Import EventScreen
+import 'package:my_member_link/views/membership/membership_listing.dart'; // Import MembershipListing
+import 'package:my_member_link/views/payment_list.dart'; // Import PaymentListScreen
 
 class MyDrawer extends StatelessWidget {
   const MyDrawer({super.key});
@@ -21,7 +24,7 @@ class MyDrawer extends StatelessWidget {
               ),
             ),
             child: Align(
-              alignment: Alignment.topCenter, // Place text at the bottom
+              alignment: Alignment.topCenter, // Place text at the top
               child: Text(
                 'Welcome to My Member Link!',
                 style: TextStyle(
@@ -62,14 +65,44 @@ class MyDrawer extends StatelessWidget {
             },
             title: const Text("Newsletter"),
           ),
-          // Removed Events ListTile
+          // Events ListTile
+          ListTile(
+            title: const Text("Events"),
+            onTap: () {
+              Navigator.pop(context); // Close the drawer
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const EventScreen(),
+                ),
+              );
+            },
+          ),
           // Members ListTile
-          const ListTile(
-            title: Text("Members"),
+          ListTile(
+            title: const Text("Members"),
+            onTap: () {
+              Navigator.pop(context); // Close the drawer
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>  MembershipListing(), // Navigate to MembershipListing
+                ),
+              );
+            },
           ),
           // Payments ListTile
-          const ListTile(
-            title: Text("Payments"),
+          ListTile(
+            title: const Text("Payments"),
+            onTap: () {
+              Navigator.pop(context); // Close the drawer
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>  PaymentList(), // Navigate to PaymentListScreen
+                ),
+              );
+            },
           ),
           // Products ListTile (Updated navigation to ProductScreen)
           ListTile(

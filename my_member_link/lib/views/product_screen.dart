@@ -3,8 +3,6 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:my_member_link/myconfig.dart';
 import 'display_product.dart'; // Import the ProductDetailScreen
-import 'package:provider/provider.dart';
-import 'package:my_member_link/models/cart.dart'; // Import the Cart model
 
 class ProductScreen extends StatefulWidget {
   const ProductScreen({super.key});
@@ -39,8 +37,7 @@ class _ProductScreenState extends State<ProductScreen> {
       if (response.statusCode == 200) {
         var data = json.decode(response.body);
 
-        // Debugging response structure
-        print('Decoded data: $data');
+        print('Decoded data: $data'); // Debugging response structure
 
         if (data is Map && data['products'] != null) {
           setState(() {
@@ -169,23 +166,33 @@ class _ProductScreenState extends State<ProductScreen> {
                                       child: Padding(
                                         padding: const EdgeInsets.all(10),
                                         child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment
+                                              .start, // Align content to the left
+                                          mainAxisSize:
+                                              MainAxisSize.min, // Wrap tightly
                                           children: [
-                                            Text(
-                                              product['name'],
-                                              style: const TextStyle(
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.bold),
-                                              overflow: TextOverflow.ellipsis,
-                                              maxLines: 2,
+                                            Align(
+                                              alignment: Alignment.centerLeft,
+                                              child: Text(
+                                                product['name'],
+                                                style: const TextStyle(
+                                                    fontSize: 13,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                                overflow: TextOverflow.ellipsis,
+                                                maxLines: 2,
+                                              ),
                                             ),
                                             const SizedBox(height: 5),
-                                            Text(
-                                              '\$${product['price']}',
-                                              style: const TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.bold),
+                                            Align(
+                                              alignment: Alignment.centerLeft,
+                                              child: Text(
+                                                '\$${product['price']}',
+                                                style: const TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
                                             ),
                                           ],
                                         ),
@@ -204,12 +211,16 @@ class _ProductScreenState extends State<ProductScreen> {
                         children: [
                           IconButton(
                             icon: const Icon(Icons.arrow_back),
-                            onPressed: previousPage,
+                            onPressed: currentPage > 1
+                                ? previousPage
+                                : null, // Disable if on first page
                           ),
                           Text('Page $currentPage'),
                           IconButton(
                             icon: const Icon(Icons.arrow_forward),
-                            onPressed: nextPage,
+                            onPressed: currentPage < totalPages
+                                ? nextPage
+                                : null, // Disable if on last page
                           ),
                         ],
                       ),
